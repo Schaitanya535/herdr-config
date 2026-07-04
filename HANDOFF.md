@@ -50,14 +50,14 @@ for future use (e.g. recipes) even though no layout calls it now.
 **Worktree base:** `new-worktree.sh` always branches off a freshly-fetched
 `origin/main` (no base picker) — `git fetch origin main` then `--base origin/main`.
 
-**Repo chip / cwd-follow:** plain `herdr workspace create` leaves the workspace's
-`.worktree` (repo association) **null**, so the side-panel repo/branch chip is blank
-and doesn't follow `cd` — unlike native workspaces. Fix: after building, if the
-folder is in a git repo, `new-workspace.sh` runs `herdr worktree open --cwd REPO
---path REPO`, which **adopts the same workspace** (dedups by checkout, no new ws)
-and populates `.worktree`. Non-destructive on the main checkout (`worktree remove`
-on it only closes the herdr workspace; git refuses to delete the checkout).
-`new-worktree.sh` needs no such step — real worktrees get `.worktree` on create.
+**Repo chip / cwd-follow:** the side-panel bold name = the workspace **label**, and
+herdr **auto-derives + updates it from the active pane's repo as you cd** — but only
+if you DON'T pass `--label`. An explicit `--label` pins the name so it won't follow.
+So `new-workspace.sh` calls `workspace create` with **no `--label`** (auto-label
+follows). The branch line is computed live from the active pane's cwd and always
+follows, independent of `.worktree`. (Earlier attempt using `herdr worktree open`
+to populate `.worktree` was a wrong turn — `.worktree` doesn't drive the chip name;
+the label does. Reverted.)
 
 `cs` is a shell **alias** (`claude --dangerously-skip-permissions --plugin-dir
 ~/dev/repos/pegasus`). `pane run` executes in the pane's interactive shell so the
