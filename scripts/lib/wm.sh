@@ -47,6 +47,7 @@ WM_LAYOUTS=$(cat <<'EOF'
 pei-agentic	claude(cs) runs · nvim/codex/pi = empty tabs
 pei-lean	claude(cs) runs · nvim = empty tab
 personal	nvim runs · claude/pi = empty tabs
+nvim-cs	claude(cs) primary runs · nvim = empty tab
 review	codex only (code-review prompt)
 blank	single empty shell (native-like)
 EOF
@@ -80,6 +81,15 @@ wm_layout_personal() {
   wm_tab "$ws" "$cwd" pi     >/dev/null                  # empty tab
 }
 
+# cs is primary (auto-runs in the root claude tab); nvim is an empty tab you
+# open on demand. Same shape as pei-lean — kept as its own name for config repos.
+wm_layout_nvim_cs() {
+  local ws=$1 cwd=$2 rt=$3 rp=$4
+  "$herdr" tab rename "$rt" claude >/dev/null 2>&1
+  "$herdr" pane run "$rp" "cs" >/dev/null 2>&1 || true   # cs is primary
+  wm_tab "$ws" "$cwd" nvim >/dev/null                    # empty nvim tab
+}
+
 wm_layout_review() {
   local ws=$1 cwd=$2 rt=$3 rp=$4
   local prompt="You are going to do a code review. Ground the review in the actual code. Use glab to inspect the merge request. I will shortly give you the MR."
@@ -97,6 +107,24 @@ wm_build() {
   local key=$1; shift
   "wm_layout_${key//-/_}" "$@"
 }
+
+# --- recipes --------------------------------------------------------------
+# A recipe = a pinned "folder + layout" pair for one-pick launch (prefix+l),
+# bypassing the two-step folder/layout pick of prefix+N. Reuses the layout fns
+# above — the layout key must match a WM_LAYOUTS key.
+#
+# One "name<TAB>folder<TAB>layout" line per recipe. ~ is expanded at launch.
+# Add a recipe: append a line here. The name is just the picker label.
+WM_RECIPES=$(cat <<'EOF'
+work-ra	~/Work/pei-ra-api	pei-agentic
+work-fusion	~/Work/pei-fusion-monorepo	pei-agentic
+review-ra	~/Work/pei-ra-api	review
+review-fusion	~/Work/pei-fusion-monorepo	review
+upskill	~/Projects/mission-upskilling	personal
+nvim	~/.config/nvim	nvim-cs
+herdr	~/.config/herdr	nvim-cs
+EOF
+)
 
 # --- pickers --------------------------------------------------------------
 
@@ -118,4 +146,13 @@ wm_pick_folder() {
   query=$(printf '%s\n' "$out" | sed -n '1p')
   sel=$(printf '%s\n' "$out" | sed -n '2p')
   if [ -n "$sel" ]; then printf '%s' "$sel"; else printf '%s' "$query"; fi
+}
+
+# wm_pick_recipe -> echoes the chosen "folder<TAB>layout" (empty on cancel).
+# fzf shows all three columns; we drop field 1 (the label) from the result.
+wm_pick_recipe() {
+  { printf '%s\n' "$WM_RECIPES" \
+      | fzf --delimiter='\t' --with-nth='1,3,2' --prompt="recipe> " \
+            --height=60% --border --info=inline \
+      | cut -f2,3; } || true
 }

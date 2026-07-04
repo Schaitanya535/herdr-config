@@ -10,6 +10,7 @@ Keybindings (`config.toml`, prefix `ctrl+s`):
 - `prefix+/` scrollback→nvim · `prefix+a` agents picker · `prefix+f` fzf workspace picker
 - `prefix+w` native workspace picker (kept) · `prefix+g` native goto (find-everything)
 - `prefix+N` new workspace from template · `prefix+G` new worktree from template (DIY)
+- `prefix+l` launch recipe (pinned folder+layout, one pick)
 
 Scripts (`scripts/`, pickers are `[[keys.command]]` type=pane):
 - `agents-jump.sh` — `agent list` → fzf → `agent focus <terminal_id>`
@@ -18,6 +19,7 @@ Scripts (`scripts/`, pickers are `[[keys.command]]` type=pane):
 - `lib/wm.sh` — shared template-picker library: build primitives + layout defs + pickers
 - `new-workspace.sh` (prefix+N) — pick layout → pick folder (zoxide+free-type) → build
 - `new-worktree.sh` (prefix+G) — branch/base/layout → `worktree create` → build
+- `new-recipe.sh` (prefix+l) — pick recipe → resolve pinned folder+layout → build
 
 Plugins: `paulbkim-dev/vim-herdr-navigation` (C-hjkl vim/herdr nav; needs `jq`).
 **herdr-plus was evaluated then uninstalled** — see "Template system" below.
@@ -38,6 +40,8 @@ you start yourself (lighter startup, open what you need when you need it):
 - `pei-agentic` — **claude** runs `cs`; `nvim`/`codex`/`pi` are empty tabs
 - `pei-lean` — **claude** runs `cs`; `nvim` is an empty tab
 - `personal` — **nvim** runs; `claude`/`pi` are empty tabs   (~/Projects)
+- `nvim-cs` — **cs** primary (auto-runs, claude root tab) · `nvim` = empty tab.
+  Same shape as `pei-lean`; kept as its own name for config repos (nvim/herdr recipes).
 - `review` — codex only, seeded with a code-review prompt (uses glab); no nvim
 - `blank` — single empty shell (native-like)
 
@@ -112,14 +116,20 @@ alias resolves. If it ever misfires, expand it in the layout fn.
 3. Confirm `prefix+N`/`prefix+G` (shift) don't collide with anything native (`prefix+?`).
 4. Eyeball the nvim pane ratios; tune `wm_nvim` if needed.
 
-## NEXT TASK — "recipes" (pinned quick-pick)
+## Recipes (DONE — pinned quick-pick, prefix+l)
 
-Wanted: preconfigured **project + template** pairs for one-pick launch (the fast path
-that herdr-plus "projects" gave, but ours). Idea: a `prefix+l` picker over a small
-list of `folder + layout` recipes (e.g. `pei-fusion-monorepo → pei-agentic`), pinned
-at the top / bypassing the two-step folder pick. Reuse `wm_build` + the layout fns in
-`lib/wm.sh` so there's a single source of layout defs. Likely a `recipes` array in a
-config file or inline in a `new-recipe.sh`, bound to `prefix+l`.
+Preconfigured **folder + layout** pairs for one-pick launch (the fast path
+herdr-plus "projects" gave, but ours). `prefix+l` → `new-recipe.sh` → fzf over
+`WM_RECIPES` → resolve pinned folder+layout → `wm_build` (same layout fns as
+prefix+N/G, single source in `lib/wm.sh`) → new workspace.
+
+**Recipes registry** = `WM_RECIPES` in `lib/wm.sh`: one `name<TAB>folder<TAB>layout`
+line each. `~` expanded at launch; folder is `-d` checked. layout must match a
+WM_LAYOUTS key. `wm_pick_recipe` shows all cols (`--with-nth=1,3,2`) and returns
+`folder<TAB>layout` via `cut -f2,3`. Add a recipe = append a line.
+Seeded (the real workflow): work-ra / work-fusion → pei-agentic ·
+review-ra / review-fusion → review · upskill → personal ·
+nvim / herdr → nvim-cs.
 
 ## File map
 - `config.toml` — keybindings/theme/ui

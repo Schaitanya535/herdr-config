@@ -77,6 +77,13 @@ type = "pane"
 command = "/Users/chaitanyasura/.config/herdr/scripts/new-worktree.sh"
 description = "new worktree from template"
 
+# prefix+l: one-pick launch of a pinned folder+layout recipe (WM_RECIPES in wm.sh).
+[[keys.command]]
+key = "prefix+l"
+type = "pane"
+command = "/Users/chaitanyasura/.config/herdr/scripts/new-recipe.sh"
+description = "launch recipe (folder+layout)"
+
 # --- vim-aware pane/split nav: ctrl+hjkl (vim-herdr-navigation plugin) ---
 [[keys.command]]
 key = "ctrl+h"
