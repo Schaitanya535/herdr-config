@@ -1,0 +1,78 @@
+onboarding = false
+
+[keys]
+prefix = "ctrl+s"
+split_vertical = "prefix+\\"
+# Pane focus (ctrl+hjkl) now handled by the vim-herdr-navigation plugin below,
+# so it's vim-split-aware. Kept commented for quick revert to plain herdr focus:
+# focus_pane_left = "ctrl+h"
+# focus_pane_down = "ctrl+j"
+# focus_pane_up = "ctrl+k"
+# focus_pane_right = "ctrl+l"
+# resize_mode = "ctrl+r"   # removed: ctrl+r collides with shell reverse-search
+navigate_workspace_down = "j"
+navigate_workspace_up = "k"
+
+# --- resize panes: M-hjkl (direct alt), tmux-style, via herdr CLI ---
+[[keys.command]]
+key = "alt+h"
+type = "shell"
+command = "\"$HERDR_BIN_PATH\" pane resize --direction left --amount 0.03 --current"
+description = "resize pane left (M-h)"
+
+[[keys.command]]
+key = "alt+j"
+type = "shell"
+command = "\"$HERDR_BIN_PATH\" pane resize --direction down --amount 0.03 --current"
+description = "resize pane down (M-j)"
+
+[[keys.command]]
+key = "alt+k"
+type = "shell"
+command = "\"$HERDR_BIN_PATH\" pane resize --direction up --amount 0.03 --current"
+description = "resize pane up (M-k)"
+
+[[keys.command]]
+key = "alt+l"
+type = "shell"
+command = "\"$HERDR_BIN_PATH\" pane resize --direction right --amount 0.03 --current"
+description = "resize pane right (M-l)"
+
+# --- scrollback -> nvim (copy-mode search workaround): prefix+/ ---
+[[keys.command]]
+key = "prefix+/"
+type = "pane"
+command = "/Users/chaitanyasura/.config/herdr/scripts/scrollback-edit.sh"
+description = "open scrollback in editor"
+
+# --- vim-aware pane/split nav: ctrl+hjkl (vim-herdr-navigation plugin) ---
+[[keys.command]]
+key = "ctrl+h"
+type = "plugin_action"
+command = "vim-herdr-navigation.left"
+description = "navigate left (vim/herdr)"
+
+[[keys.command]]
+key = "ctrl+j"
+type = "plugin_action"
+command = "vim-herdr-navigation.down"
+description = "navigate down (vim/herdr)"
+
+[[keys.command]]
+key = "ctrl+k"
+type = "plugin_action"
+command = "vim-herdr-navigation.up"
+description = "navigate up (vim/herdr)"
+
+[[keys.command]]
+key = "ctrl+l"
+type = "plugin_action"
+command = "vim-herdr-navigation.right"
+description = "navigate right (vim/herdr)"
+
+[theme]
+name = "catppuccin"
+auto_switch = false
+
+[ui]
+agent_panel_sort = "priority"
