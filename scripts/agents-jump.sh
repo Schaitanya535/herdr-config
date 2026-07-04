@@ -23,4 +23,12 @@ line="$(
 [ -z "${line:-}" ] && exit 0
 
 target="${line%%$'\t'*}"
-[ -n "$target" ] && "$herdr" agent focus "$target"
+[ -z "$target" ] && exit 0
+
+"$herdr" agent focus "$target"
+
+# The type="pane" overlay zooms its tab to show fzf; when we move focus away and
+# the overlay exits, herdr restores the *overlay-induced* zoom (src/app/api.rs
+# restore_overlay_after_exit), leaving the tab marked "Z" with a pane maximized.
+# Clear the source tab's zoom so nothing stray is left behind.
+[ -n "${HERDR_ACTIVE_PANE_ID:-}" ] && "$herdr" pane zoom "$HERDR_ACTIVE_PANE_ID" --off >/dev/null 2>&1 || true

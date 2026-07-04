@@ -20,4 +20,11 @@ line="$(
 [ -z "${line:-}" ] && exit 0
 
 target="${line%%$'\t'*}"
-[ -n "$target" ] && "$herdr" workspace focus "$target"
+[ -z "$target" ] && exit 0
+
+"$herdr" workspace focus "$target"
+
+# The type="pane" overlay zooms its tab to show fzf; on exit herdr can restore
+# the overlay-induced zoom (src/app/api.rs restore_overlay_after_exit), leaving
+# the source tab marked "Z". Clear the source tab's zoom.
+[ -n "${HERDR_ACTIVE_PANE_ID:-}" ] && "$herdr" pane zoom "$HERDR_ACTIVE_PANE_ID" --off >/dev/null 2>&1 || true
