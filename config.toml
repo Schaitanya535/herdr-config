@@ -62,6 +62,21 @@ type = "pane"
 command = "/Users/chaitanyasura/.config/herdr/scripts/workspaces-jump.sh"
 description = "find workspace (fzf)"
 
+# --- DIY template pickers (override native new-workspace / new-worktree) ---
+# prefix+N: pick layout -> pick folder (zoxide + free-type) -> new workspace.
+[[keys.command]]
+key = "prefix+N"
+type = "pane"
+command = "/Users/chaitanyasura/.config/herdr/scripts/new-workspace.sh"
+description = "new workspace from template"
+
+# prefix+G: pick branch/base/layout -> new git worktree from the current repo.
+[[keys.command]]
+key = "prefix+G"
+type = "pane"
+command = "/Users/chaitanyasura/.config/herdr/scripts/new-worktree.sh"
+description = "new worktree from template"
+
 # --- vim-aware pane/split nav: ctrl+hjkl (vim-herdr-navigation plugin) ---
 [[keys.command]]
 key = "ctrl+h"
