@@ -22,9 +22,9 @@ line="$(
 target="${line%%$'\t'*}"
 [ -z "$target" ] && exit 0
 
-"$herdr" workspace focus "$target"
+# Clear the overlay's zoom on this (source) tab BEFORE jumping, so `workspace
+# focus` is the last focus move (lands on the target workspace) and no stray "Z"
+# is left on the source tab.
+"$herdr" pane zoom --current --off >/dev/null 2>&1 || true
 
-# The type="pane" overlay zooms its tab to show fzf; on exit herdr can restore
-# the overlay-induced zoom (src/app/api.rs restore_overlay_after_exit), leaving
-# the source tab marked "Z". Clear the source tab's zoom.
-[ -n "${HERDR_ACTIVE_PANE_ID:-}" ] && "$herdr" pane zoom "$HERDR_ACTIVE_PANE_ID" --off >/dev/null 2>&1 || true
+"$herdr" workspace focus "$target"
