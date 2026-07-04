@@ -10,8 +10,11 @@ split_vertical = "prefix+\\"
 # focus_pane_up = "ctrl+k"
 # focus_pane_right = "ctrl+l"
 # resize_mode = "ctrl+r"   # removed: ctrl+r collides with shell reverse-search
-navigate_workspace_down = "j"
-navigate_workspace_up = "k"
+# prefix+w now runs the fzf workspace picker (see [[keys.command]] below);
+# unbind herdr's native picker + its navigate-mode movement keys.
+workspace_picker = ""
+# navigate_workspace_down = "j"
+# navigate_workspace_up = "k"
 
 # --- resize panes: M-hjkl (direct alt), tmux-style, via herdr CLI ---
 [[keys.command]]
@@ -44,6 +47,20 @@ key = "prefix+/"
 type = "pane"
 command = "/Users/chaitanyasura/.config/herdr/scripts/scrollback-edit.sh"
 description = "open scrollback in editor"
+
+# --- keyboard agents panel: prefix+a picks an agent in fzf and jumps to it ---
+[[keys.command]]
+key = "prefix+a"
+type = "pane"
+command = "/Users/chaitanyasura/.config/herdr/scripts/agents-jump.sh"
+description = "jump to agent (fzf)"
+
+# --- fzf workspace picker: prefix+w (replaces native workspace_picker) ---
+[[keys.command]]
+key = "prefix+w"
+type = "pane"
+command = "/Users/chaitanyasura/.config/herdr/scripts/workspaces-jump.sh"
+description = "switch workspace (fzf)"
 
 # --- vim-aware pane/split nav: ctrl+hjkl (vim-herdr-navigation plugin) ---
 [[keys.command]]
