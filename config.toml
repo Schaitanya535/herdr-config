@@ -16,6 +16,16 @@ split_vertical = "prefix+\\"
 navigate_workspace_down = "j"
 navigate_workspace_up = "k"
 
+# Quick-jump (needs kitty protocol in wezterm):
+#   ctrl+1..9        = workspaces (direct, no prefix)
+#   prefix+ctrl+1..9 = agents (prefix-mode; ctrl chosen over alt for ergonomics)
+# (alt+1..9 also works direct but the mac option key is awkward; ctrl+shift
+#  doesn't fire here and cmd+digit is stolen by wezterm's ActivateTab.)
+focus_agent = "prefix+ctrl+1..9"
+
+[keys.indexed]
+workspaces = "ctrl"
+
 # --- resize panes: M-hjkl (direct alt), tmux-style, via herdr CLI ---
 [[keys.command]]
 key = "alt+h"
