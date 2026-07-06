@@ -92,7 +92,7 @@ wm_layout_nvim_cs() {
 
 wm_layout_review() {
   local ws=$1 cwd=$2 rt=$3 rp=$4
-  local prompt="You are going to do a code review. Ground the review in the actual code. Use glab to inspect the merge request. I will shortly give you the MR."
+  local prompt="You are going to do a code review. I will shortly give you a GitLab MR. Steps: (1) Use glab to inspect the MR. (2) Extract the Jira ticket key from the MR title and pull the ticket via the Jira MCP server to understand the intended context and acceptance criteria. (3) glab mr checkout the branch here and review the diff grounded in the actual code — read the surrounding code, and use git commit history (git log/blame) and any other tools to ground every claim. Do not review from the diff alone."
   "$herdr" tab rename "$rt" review >/dev/null 2>&1
   "$herdr" pane run "$rp" "codex $(printf '%q' "$prompt")" >/dev/null 2>&1 || true
 }
@@ -115,6 +115,11 @@ wm_build() {
 #
 # One "name<TAB>folder<TAB>layout" line per recipe. ~ is expanded at launch.
 # Add a recipe: append a line here. The name is just the picker label.
+#
+# Special case: recipes whose layout is `review` don't open a workspace on the
+# folder — new-recipe.sh treats the folder as a git repo and branches a
+# throwaway worktree (review/<ts>) off origin/main, so the review runs isolated
+# from your main checkout. codex then `glab mr checkout`s the MR inside it.
 WM_RECIPES=$(cat <<'EOF'
 work-ra	~/Work/pei-ra-api	pei-agentic
 work-fusion	~/Work/pei-fusion-monorepo	pei-agentic
