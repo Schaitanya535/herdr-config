@@ -41,6 +41,24 @@ wm_nvim() {
   "$herdr" pane run "$rp" "nvim" >/dev/null 2>&1 || true
 }
 
+# wm_wait_shell PANE
+# A freshly created pane's shell needs a beat to finish spawning + sourcing the
+# profile before it will accept a typed command; a `pane run` fired too early has
+# its keystrokes dropped. Worktree creation (git checkout) widens this race vs a
+# plain workspace. A new pane's terminal is blank until its prompt draws, so poll
+# `pane read` and return as soon as any non-whitespace appears (the rendered
+# prompt). Prompt-char matching is avoided — starship/powerline prompts carry no
+# reliable trailing terminator. Caps at ~2.4s then proceeds regardless.
+wm_wait_shell() {
+  local rp=$1 i
+  for i in $(seq 1 16); do
+    if "$herdr" pane read "$rp" --source visible --lines 6 2>/dev/null | grep -q '[^[:space:]]'; then
+      return 0
+    fi
+    sleep 0.15
+  done
+}
+
 # --- layouts --------------------------------------------------------------
 # Picker registry: one "key<TAB>description" line per layout.
 WM_LAYOUTS=$(cat <<'EOF'
@@ -94,6 +112,7 @@ wm_layout_review() {
   local ws=$1 cwd=$2 rt=$3 rp=$4
   local prompt="You are going to do a code review. I will shortly give you a GitLab MR. Steps: (1) Use glab to inspect the MR. (2) Extract the Jira ticket key from the MR title and pull the ticket via the Jira MCP server to understand the intended context and acceptance criteria. (3) glab mr checkout the branch here and review the diff grounded in the actual code — read the surrounding code, and use git commit history (git log/blame) and any other tools to ground every claim. Do not review from the diff alone."
   "$herdr" tab rename "$rt" review >/dev/null 2>&1
+  wm_wait_shell "$rp"   # worktree shell must be ready or the codex keystrokes drop
   "$herdr" pane run "$rp" "codex $(printf '%q' "$prompt")" >/dev/null 2>&1 || true
 }
 
