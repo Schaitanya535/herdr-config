@@ -52,21 +52,28 @@ wm_nvim() {
   "$herdr" pane run "$rp" "nvim" >/dev/null 2>&1 || true
 }
 
-# wm_wait_shell PANE
-# A freshly created pane's shell needs a beat to finish spawning + sourcing the
-# profile before it will accept a typed command; a `pane run` fired too early has
-# its keystrokes dropped. Worktree creation (git checkout) widens this race vs a
-# plain workspace. A new pane's terminal is blank until its prompt draws, so poll
-# `pane read` and return as soon as any non-whitespace appears (the rendered
-# prompt). Prompt-char matching is avoided — starship/powerline prompts carry no
-# reliable trailing terminator. Caps at ~2.4s then proceeds regardless.
-wm_wait_shell() {
-  local rp=$1 i
-  for i in $(seq 1 16); do
-    if "$herdr" pane read "$rp" --source visible --lines 6 2>/dev/null | grep -q '[^[:space:]]'; then
-      return 0
-    fi
-    sleep 0.15
+# wm_launch_agent PANE CMD PROCNAME
+# Auto-launch an agent (codex etc.) into a freshly created pane, reliably. A
+# fresh pane's shell needs a beat to spawn + source its profile before it accepts
+# typed input; a `pane run` fired too early has its keystrokes silently dropped,
+# and worktree creation widens that race. Screen-scraping "is the shell ready"
+# is flaky — transient pre-prompt output trips it. So instead: fire the command,
+# then VERIFY the target process actually started (process-info), and retry with
+# a line-clear if it didn't. Self-correcting regardless of timing.
+wm_launch_agent() {
+  local rp=$1 cmd=$2 proc=$3 i j
+  for i in 1 2 3 4; do
+    "$herdr" pane run "$rp" "$cmd" >/dev/null 2>&1 || true
+    for j in $(seq 1 20); do   # ~3s: wait for the process to appear
+      if "$herdr" pane process-info --pane "$rp" 2>/dev/null \
+           | jq -e --arg p "$proc" '.result.process_info.foreground_processes[]? | select(.name==$p)' >/dev/null 2>&1; then
+        return 0
+      fi
+      sleep 0.15
+    done
+    # keystrokes were dropped (shell not ready) — clear any partial line, retry.
+    "$herdr" pane send-keys "$rp" ctrl+c >/dev/null 2>&1 || true
+    sleep 0.3
   done
 }
 
@@ -123,8 +130,8 @@ wm_layout_review() {
   local ws=$1 cwd=$2 rt=$3 rp=$4
   local prompt="You are going to do a code review. I will shortly give you a GitLab MR. Steps: (1) Use glab to inspect the MR. (2) Extract the Jira ticket key from the MR title and pull the ticket via the Jira MCP server to understand the intended context and acceptance criteria. (3) glab mr checkout the branch here and review the diff grounded in the actual code — read the surrounding code, and use git commit history (git log/blame) and any other tools to ground every claim. Do not review from the diff alone."
   "$herdr" tab rename "$rt" review >/dev/null 2>&1
-  wm_wait_shell "$rp"   # worktree shell must be ready or the codex keystrokes drop
-  "$herdr" pane run "$rp" "codex $(printf '%q' "$prompt")" >/dev/null 2>&1 || true
+  # Verify-and-retry: worktree shell may not be ready, dropping the keystrokes.
+  wm_launch_agent "$rp" "codex $(printf '%q' "$prompt")" codex
 }
 
 wm_layout_blank() {
