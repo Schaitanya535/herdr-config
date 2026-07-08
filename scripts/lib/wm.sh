@@ -13,6 +13,17 @@
 
 herdr="${HERDR_BIN_PATH:-herdr}"
 
+# wm_default_branch REPO -> echoes the repo's default branch. Never assume main:
+# repos differ (pei-ra-api uses master, pei-fusion uses main). Resolve via
+# origin/HEAD, fall back to `remote show`, then to main.
+wm_default_branch() {
+  local repo=$1 db
+  db=$(git -C "$repo" symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's|^origin/||')
+  [ -z "$db" ] && db=$(git -C "$repo" remote show origin 2>/dev/null | sed -n 's/.*HEAD branch: //p')
+  [ -z "$db" ] && db=main
+  printf '%s' "$db"
+}
+
 # --- primitives -----------------------------------------------------------
 
 # wm_tab WS CWD LABEL [CMD] -> echoes the new tab's root pane id

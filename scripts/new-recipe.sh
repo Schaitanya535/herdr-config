@@ -32,11 +32,12 @@ if [ "$layout" = "review" ]; then
   repo=$(git -C "$folder" rev-parse --show-toplevel 2>/dev/null || true)
   [ -z "$repo" ] && die "review recipe needs a git repo (folder=$folder)"
 
-  git -C "$repo" fetch origin main --quiet 2>>"$LOG" || true
+  db=$(wm_default_branch "$repo")
+  git -C "$repo" fetch origin "$db" --quiet 2>>"$LOG" || true
   branch="review/$(date +%Y%m%d-%H%M%S)"
-  log "repo=$repo branch=$branch base=origin/main"
+  log "repo=$repo branch=$branch base=origin/$db default=$db"
 
-  out=$("$herdr" worktree create --cwd "$repo" --branch "$branch" --base origin/main --no-focus --json 2>>"$LOG" || true)
+  out=$("$herdr" worktree create --cwd "$repo" --branch "$branch" --base "origin/$db" --no-focus --json 2>>"$LOG" || true)
   log "create-out: $out"
   ws=$(printf '%s' "$out" | jq -r '.result.workspace.workspace_id // empty')
   [ -z "$ws" ] && die "worktree create failed — $(printf '%s' "$out" | jq -r '.error // "see '"$LOG"'"')"

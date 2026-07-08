@@ -37,10 +37,11 @@ read -r branch || true
 branch="$(printf '%s' "$branch" | tr -d '[:space:]')"
 [ -z "$branch" ] && die "no branch name given"
 
-# Always branch off a fresh origin/main.
-git -C "$repo" fetch origin main --quiet 2>>"$LOG" || true
-base="origin/main"
-log "branch=$branch base=$base"
+# Always branch off a fresh origin/<default> (main, master, … — resolved, not assumed).
+db=$(wm_default_branch "$repo")
+git -C "$repo" fetch origin "$db" --quiet 2>>"$LOG" || true
+base="origin/$db"
+log "branch=$branch base=$base default=$db"
 
 layout=$(wm_pick_layout); [ -z "$layout" ] && { log "layout cancelled"; exit 0; }
 log "layout=$layout"
