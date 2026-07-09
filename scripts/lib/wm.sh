@@ -127,8 +127,8 @@ wm_layout_nvim_cs() {
 }
 
 # wm_layout_review WS CWD RT RP [MR]
-# The review workflow itself lives in the codex `mr-review` skill (canonical
-# source in this repo at codex-skills/mr-review, symlinked into ~/.codex/skills).
+# The review workflow itself lives in the `mr-review` skill (canonical source at
+# ~/.agents/skills/mr-review, symlinked into ~/.codex/skills and ~/.claude/skills).
 # We only hand codex a one-line trigger; the skill supplies the steps. If an MR
 # was captured at recipe-pick time it's baked into the trigger, so codex starts
 # on it immediately; otherwise codex asks for it (per the skill).
