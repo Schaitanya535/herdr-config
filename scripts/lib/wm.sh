@@ -84,7 +84,7 @@ pei-agentic	claude(cs) runs · nvim/codex/pi = empty tabs
 pei-lean	claude(cs) runs · nvim = empty tab
 personal	nvim runs · claude/pi = empty tabs
 nvim-cs	claude(cs) primary runs · nvim = empty tab
-review	codex only (code-review prompt)
+review	codex only (mr-review skill; prompts for MR)
 blank	single empty shell (native-like)
 EOF
 )
@@ -126,12 +126,34 @@ wm_layout_nvim_cs() {
   wm_tab "$ws" "$cwd" nvim >/dev/null                    # empty nvim tab
 }
 
+# wm_layout_review WS CWD RT RP [MR]
+# The review workflow itself lives in the codex `mr-review` skill (canonical
+# source in this repo at codex-skills/mr-review, symlinked into ~/.codex/skills).
+# We only hand codex a one-line trigger; the skill supplies the steps. If an MR
+# was captured at recipe-pick time it's baked into the trigger, so codex starts
+# on it immediately; otherwise codex asks for it (per the skill).
 wm_layout_review() {
-  local ws=$1 cwd=$2 rt=$3 rp=$4
-  local prompt="You are going to do a code review. I will shortly give you a GitLab MR. Steps: (1) Use glab to inspect the MR. (2) Extract the Jira ticket key from the MR title and pull the ticket via the Jira MCP server to understand the intended context and acceptance criteria. (3) glab mr checkout the branch here and review the diff grounded in the actual code — read the surrounding code, and use git commit history (git log/blame) and any other tools to ground every claim. Do not review from the diff alone."
+  local ws=$1 cwd=$2 rt=$3 rp=$4 mr=${5:-}
+  local prompt
+  if [ -n "$mr" ]; then
+    prompt="Use the mr-review skill to review GitLab MR: $mr"
+  else
+    prompt="Use the mr-review skill to review a GitLab MR. I'll give you the MR shortly."
+  fi
   "$herdr" tab rename "$rt" review >/dev/null 2>&1
+  # codex gates every untrusted directory behind a "Do you trust this dir?"
+  # prompt (trusted paths live in ~/.codex/config.toml). It keys trust on the
+  # git REPO ROOT, not the cwd — and for a linked worktree that resolves to the
+  # MAIN repo (parent of --git-common-dir), not the throwaway review/<ts> path.
+  # Each review lands in a fresh worktree, so codex halts on the gate and never
+  # reaches the prompt. Pre-trust the resolved repo root inline via -c so codex
+  # opens straight to work. Idempotent: harmless if the root is already trusted.
+  local root
+  root=$(dirname "$(git -C "$cwd" rev-parse --path-format=absolute --git-common-dir 2>/dev/null)")
+  local opts=""
+  [ -d "$root" ] && opts="-c $(printf '%q' "projects.\"$root\".trust_level=\"trusted\"") "
   # Verify-and-retry: worktree shell may not be ready, dropping the keystrokes.
-  wm_launch_agent "$rp" "codex $(printf '%q' "$prompt")" codex
+  wm_launch_agent "$rp" "codex ${opts}$(printf '%q' "$prompt")" codex
 }
 
 wm_layout_blank() {

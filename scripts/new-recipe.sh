@@ -26,11 +26,18 @@ layout=$(printf '%s' "$pick" | cut -f2)
 folder="${folder/#\~/$HOME}"
 [ -d "$folder" ] || { echo "not a directory: $folder"; sleep 2; exit 1; }
 
+mr=""
 if [ "$layout" = "review" ]; then
   # --- review: branch a throwaway worktree off origin/main --------------------
   log "--- review-recipe run $(date '+%F %T') folder=$folder ---"
   repo=$(git -C "$folder" rev-parse --show-toplevel 2>/dev/null || true)
   [ -z "$repo" ] && die "review recipe needs a git repo (folder=$folder)"
+
+  # Capture the MR here, at templating time, so codex starts on it immediately.
+  # Blank is fine — the mr-review skill just asks for it once codex opens.
+  printf 'MR to review (URL or number, blank to skip): '
+  read -r mr || mr=""
+  log "mr=$mr"
 
   db=$(wm_default_branch "$repo")
   git -C "$repo" fetch origin "$db" --quiet 2>>"$LOG" || true
@@ -56,7 +63,7 @@ else
   cwd="$folder"
 fi
 
-wm_build "$layout" "$ws" "$cwd" "$rt" "$rp"
+wm_build "$layout" "$ws" "$cwd" "$rt" "$rp" "$mr"
 
 # Gotcha: unzoom the overlay's own tab BEFORE focusing (focus lands on the new
 # workspace, no stray "Z"). Focus is the last move.
