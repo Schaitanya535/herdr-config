@@ -37,6 +37,13 @@ if [ "$layout" = "review" ]; then
   # Blank is fine — the mr-review skill just asks for it once codex opens.
   printf 'MR to review (URL or number, blank to skip): '
   read -r mr || mr=""
+  # Sanitize: a paste into `read` arrives wrapped in bracketed-paste markers
+  # (ESC[200~ … ESC[201~) when the terminal has that mode on. Those raw ESC bytes
+  # end up in the codex command and corrupt the launch. Strip the markers, drop
+  # any remaining control chars, and trim surrounding whitespace.
+  mr=${mr//$'\e[200~'/}; mr=${mr//$'\e[201~'/}
+  mr=$(printf '%s' "$mr" | tr -d '\000-\037')
+  mr="${mr#"${mr%%[![:space:]]*}"}"; mr="${mr%"${mr##*[![:space:]]}"}"
   log "mr=$mr"
 
   # Pick the review scope now too, so codex opens at the right depth. Cancel or
