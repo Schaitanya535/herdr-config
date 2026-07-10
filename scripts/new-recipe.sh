@@ -26,7 +26,7 @@ layout=$(printf '%s' "$pick" | cut -f2)
 folder="${folder/#\~/$HOME}"
 [ -d "$folder" ] || { echo "not a directory: $folder"; sleep 2; exit 1; }
 
-mr=""
+mr=""; scope=""
 if [ "$layout" = "review" ]; then
   # --- review: branch a throwaway worktree off origin/main --------------------
   log "--- review-recipe run $(date '+%F %T') folder=$folder ---"
@@ -38,6 +38,11 @@ if [ "$layout" = "review" ]; then
   printf 'MR to review (URL or number, blank to skip): '
   read -r mr || mr=""
   log "mr=$mr"
+
+  # Pick the review scope now too, so codex opens at the right depth. Cancel or
+  # "ask" -> the skill runs its own scope prompt inside codex.
+  scope=$(wm_pick_review_scope)
+  log "scope=$scope"
 
   db=$(wm_default_branch "$repo")
   git -C "$repo" fetch origin "$db" --quiet 2>>"$LOG" || true
@@ -63,7 +68,7 @@ else
   cwd="$folder"
 fi
 
-wm_build "$layout" "$ws" "$cwd" "$rt" "$rp" "$mr"
+wm_build "$layout" "$ws" "$cwd" "$rt" "$rp" "$mr" "$scope"
 
 # Gotcha: unzoom the overlay's own tab BEFORE focusing (focus lands on the new
 # workspace, no stray "Z"). Focus is the last move.

@@ -126,20 +126,27 @@ wm_layout_nvim_cs() {
   wm_tab "$ws" "$cwd" nvim >/dev/null                    # empty nvim tab
 }
 
-# wm_layout_review WS CWD RT RP [MR]
+# wm_layout_review WS CWD RT RP [MR] [SCOPE]
 # The review workflow itself lives in the `mr-review` skill (canonical source at
 # ~/.agents/skills/mr-review, symlinked into ~/.codex/skills and ~/.claude/skills).
-# We only hand codex a one-line trigger; the skill supplies the steps. If an MR
-# was captured at recipe-pick time it's baked into the trigger, so codex starts
-# on it immediately; otherwise codex asks for it (per the skill).
+# We only hand codex a one-line trigger; the skill supplies the steps. MR and
+# SCOPE are captured at recipe-pick time and baked into the trigger, so codex
+# starts at the right depth immediately. Blank MR -> skill asks for it; blank/
+# "ask" SCOPE -> skill runs its own scope prompt (step 1). SCOPE is a picker key
+# (thorough|minimal|ask), mapped to the sentence the skill understands here.
 wm_layout_review() {
-  local ws=$1 cwd=$2 rt=$3 rp=$4 mr=${5:-}
+  local ws=$1 cwd=$2 rt=$3 rp=$4 mr=${5:-} scope=${6:-}
   local prompt
   if [ -n "$mr" ]; then
     prompt="Use the mr-review skill to review GitLab MR: $mr"
   else
     prompt="Use the mr-review skill to review a GitLab MR. I'll give you the MR shortly."
   fi
+  case "$scope" in
+    thorough) prompt="$prompt Scope: Jira/MR requirements, Code smells, and Testing." ;;
+    minimal)  prompt="$prompt Scope: Minimal — keep it lightweight; report only clear correctness, regression, or test-risk issues." ;;
+    # ask / empty: bake nothing; the skill runs its own scope prompt.
+  esac
   "$herdr" tab rename "$rt" review >/dev/null 2>&1
   # codex gates every untrusted directory behind a "Do you trust this dir?"
   # prompt (trusted paths live in ~/.codex/config.toml). It keys trust on the
@@ -196,6 +203,18 @@ EOF
 wm_pick_layout() {
   { printf '%s\n' "$WM_LAYOUTS" \
       | fzf --delimiter='\t' --prompt="layout> " --height=60% --border --info=inline \
+      | cut -f1; } || true
+}
+
+# wm_pick_review_scope -> echoes the chosen scope key (thorough|minimal|ask),
+# empty on cancel. Baked into the review trigger so codex opens at the right
+# depth; "ask" (or cancel) leaves the mr-review skill to run its own scope prompt.
+wm_pick_review_scope() {
+  { printf '%s\n' \
+      "thorough	requirements + code smells + testing" \
+      "minimal	quick — correctness / regression / test-risk only" \
+      "ask	let the skill ask inside codex" \
+      | fzf --delimiter='\t' --with-nth='1,2' --prompt="scope> " --height=40% --border --info=inline \
       | cut -f1; } || true
 }
 
